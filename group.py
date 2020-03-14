@@ -65,33 +65,39 @@ if __name__ == "__main__":
     csv_files = []
     for fs in map(glob.iglob, args.csv):
         csv_files += list(fs)
+
+    print("# Banking analysis")
+    print()
+    print("The following CSVs where analysed: ")
+    print()
+    parsed_entries = []
     for csv_file in csv_files:
         parsed_csv = parse.parse(csv_file)
-        print("# Auswertung für {} über Zeitraum {}".format(parsed_csv.source, parsed_csv.time_range))
-        print()
+        print("- {}, {}".format(parsed_csv.source, parsed_csv.time_range))
+        parsed_entries += parsed_csv.entries
+    print()
 
-        parsed_entries = parsed_csv.entries
-        inbound, outbound = balance(parsed_entries)
-        print("Während des Zeitraums wurden {} eingezahlt und {} ausgegeben.".format(
-            famount(inbound),
-            famount(outbound)
-        ))
-        print()
+    inbound, outbound = balance(parsed_entries)
+    print("There was {} inbound and {} outbound.".format(
+        famount(inbound),
+        famount(outbound)
+    ))
+    print()
 
-        print("Gruppiert nach Referenz und sortiert nach Betrag:")
-        print()
-        grouped = group_entries(parsed_entries)
-        sorted_groups = sorted(grouped, key=lambda x: grouped[x]['sum'])
-        for key in sorted_groups:
-            group = grouped[key]
-            print("- {}: {}".format(key[:50], famount(group['sum'])))
-            for entry in group['entries']:
-                print("  - {}: {}: {}".format(entry['date'], famount(entry['amount']), entry['topic'][:50]))
-        print()
+    print("## Grouped transactions:")
+    print()
+    grouped = group_entries(parsed_entries)
+    sorted_groups = sorted(grouped, key=lambda x: grouped[x]['sum'])
+    for key in sorted_groups:
+        group = grouped[key]
+        print("- {}: {}".format(key[:50], famount(group['sum'])))
+        for entry in group['entries']:
+            print("  - {}: {}: {}".format(entry['date'], famount(entry['amount']), entry['topic'][:50]))
+    print()
 
-        print("Alle Transaktionen nach Zeit")
-        print()
-        table_entries = [ [ e['date'], famount(e['amount']), fdesc(e) ] for e in parsed_entries ]
-        print(tabulate(table_entries, headers=['Datum', 'Betrag', 'Beschreibung']))
-        print()
-        print()
+    print("## All transactions by time")
+    print()
+    table_entries = [ [ e['date'], famount(e['amount']), fdesc(e) ] for e in parsed_entries ]
+    print(tabulate(table_entries, headers=['Datum', 'Betrag', 'Beschreibung']))
+    print()
+    print()
