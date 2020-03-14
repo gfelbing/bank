@@ -6,7 +6,8 @@ import csv
 import argparse
 import parse
 import glob
-
+import re
+from group_defs import groups
 
 def balance(entries):
     inbound=0
@@ -22,7 +23,7 @@ def balance(entries):
 def group_entries(entries):
     result = {}
     for entry in entries:
-        key = fdesc(entry)
+        key = get_group(entry)
         if key in result:
             result[key]['sum'] += entry['amount']
             result[key]['entries'].append(entry)
@@ -46,9 +47,17 @@ def fdesc(entry):
     topic = entry['topic']
 
     if len(topic) > total:
-        return topic[:total-3] + "..."
-    else:
-        return topic
+        topic = topic[:total-3] + "..."
+
+    return topic
+
+def get_group(entry):
+    topic = fdesc(entry)
+    for regex, group in groups.items():
+        if re.match(regex, topic):
+            return group
+    return topic
+
 
 if __name__ == "__main__":
     args = readargs()
@@ -77,7 +86,7 @@ if __name__ == "__main__":
             group = grouped[key]
             print("- {}: {}".format(key[:50], famount(group['sum'])))
             for entry in group['entries']:
-                print("  - {}: {}".format(entry['date'], famount(entry['amount'])))
+                print("  - {}: {}: {}".format(entry['date'], famount(entry['amount']), entry['topic'][:50]))
         print()
 
         print("Alle Transaktionen nach Zeit")
